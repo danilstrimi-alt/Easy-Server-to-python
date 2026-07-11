@@ -24,64 +24,365 @@ except ImportError:
 class ServerManager:
     """Менеджер для управления локальными серверами"""
     
-    # Предустановки для популярных серверов
+    # Предустановки для популярных серверов и приложений
     SERVER_PRESETS = {
+        # 🎮 GAME SERVERS
         'minecraft': {
             'type': 'minecraft',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
             'port': 25565,
             'max_players': 20,
             'start_command': 'java -Xmx1024M -Xms1024M -jar server.jar nogui',
-            'description': 'Minecraft Java Edition Server'
+            'description': 'Minecraft Java Edition'
         },
         'csgo': {
             'type': 'csgo',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
             'port': 27015,
             'max_players': 32,
             'start_command': 'srcds -game csgo -console -usercon +game_type 0 +game_mode 1 +mapgroup mg_allclassic +map de_dust2',
-            'description': 'CS:GO Game Server'
+            'description': 'Counter-Strike: Global Offensive'
+        },
+        'cs2': {
+            'type': 'cs2',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 27015,
+            'max_players': 32,
+            'start_command': 'srcds -game csgo -console +game_type 0 +game_mode 1 +mapgroup mg_allclassic +map de_dust2',
+            'description': 'Counter-Strike 2'
         },
         'scp-sl': {
             'type': 'scp-sl',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
             'port': 7777,
             'max_players': 100,
             'start_command': 'python -m scp_server',
-            'description': 'SCP: Secret Laboratory Server'
+            'description': 'SCP: Secret Laboratory'
         },
         'gmod': {
             'type': 'gmod',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
             'port': 27015,
             'max_players': 64,
             'start_command': 'srcds -game garrysmod',
-            'description': 'Garry\'s Mod Server'
+            'description': 'Garry\'s Mod'
+        },
+        'tf2': {
+            'type': 'tf2',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 27015,
+            'max_players': 32,
+            'start_command': 'srcds -game tf +maxplayers 32 +map ctf_2fort',
+            'description': 'Team Fortress 2'
         },
         'valheim': {
             'type': 'valheim',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
             'port': 2456,
             'max_players': 10,
             'start_command': './valheim_server.x86_64',
-            'description': 'Valheim Server'
+            'description': 'Valheim'
         },
         'rust': {
             'type': 'rust',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
             'port': 28015,
             'max_players': 500,
             'start_command': './RustDedicated',
-            'description': 'Rust Game Server'
+            'description': 'Rust'
         },
         'ark': {
             'type': 'ark',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
             'port': 27015,
             'max_players': 100,
             'start_command': 'ShooterGameServer TheIsland?listen',
-            'description': 'ARK: Survival Evolved Server'
+            'description': 'ARK: Survival Evolved'
         },
         'terraria': {
             'type': 'terraria',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
             'port': 7777,
             'max_players': 8,
             'start_command': './TerrariaServer.exe -config /path/to/config.txt',
-            'description': 'Terraria Server'
-        }
+            'description': 'Terraria'
+        },
+        'palworld': {
+            'type': 'palworld',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 8211,
+            'max_players': 32,
+            'start_command': './PalServer.exe',
+            'description': 'Palworld'
+        },
+        'grounded': {
+            'type': 'grounded',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 27015,
+            'max_players': 4,
+            'start_command': 'grounded_server',
+            'description': 'Grounded'
+        },
+        'conan-exiles': {
+            'type': 'conan-exiles',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 7777,
+            'max_players': 100,
+            'start_command': 'ConanSandboxServer',
+            'description': 'Conan Exiles'
+        },
+        'dayz': {
+            'type': 'dayz',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 2302,
+            'max_players': 60,
+            'start_command': 'DayZServer_x64 -config=serverDZ.cfg',
+            'description': 'DayZ'
+        },
+        'arma3': {
+            'type': 'arma3',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 2302,
+            'max_players': 64,
+            'start_command': './arma3server -config=server.cfg',
+            'description': 'ARMA 3'
+        },
+        'unturned': {
+            'type': 'unturned',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 27015,
+            'max_players': 24,
+            'start_command': './Unturned_Server.x86_64',
+            'description': 'Unturned'
+        },
+        'starbound': {
+            'type': 'starbound',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 21025,
+            'max_players': 8,
+            'start_command': './starbound_server',
+            'description': 'Starbound'
+        },
+        'satisfactory': {
+            'type': 'satisfactory',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 7777,
+            'max_players': 4,
+            'start_command': './FactoryServer.sh',
+            'description': 'Satisfactory'
+        },
+        'space-engineers': {
+            'type': 'space-engineers',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 27016,
+            'max_players': 16,
+            'start_command': 'SpaceEngineersServer.exe',
+            'description': 'Space Engineers'
+        },
+        '7-days-to-die': {
+            'type': '7-days-to-die',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 26900,
+            'max_players': 8,
+            'start_command': './7DaysToDieServer.x86_64',
+            'description': '7 Days to Die'
+        },
+        'project-zomboid': {
+            'type': 'project-zomboid',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 16261,
+            'max_players': 16,
+            'start_command': 'java -jar ProjectZomboid.jar -server',
+            'description': 'Project Zomboid'
+        },
+
+        # 🌐 WEB & SERVICES
+        'apache': {
+            'type': 'apache',
+            'category': '🌐 ВЕБ-СЕРВИСЫ',
+            'port': 80,
+            'max_players': 100,
+            'start_command': 'sudo systemctl start apache2',
+            'description': 'Apache Web Server'
+        },
+        'nginx': {
+            'type': 'nginx',
+            'category': '🌐 ВЕБ-СЕРВИСЫ',
+            'port': 80,
+            'max_players': 100,
+            'start_command': 'sudo systemctl start nginx',
+            'description': 'Nginx Web Server'
+        },
+        'nodejs': {
+            'type': 'nodejs',
+            'category': '🌐 ВЕБ-СЕРВИСЫ',
+            'port': 3000,
+            'max_players': 100,
+            'start_command': 'node server.js',
+            'description': 'Node.js Server'
+        },
+        'python-http': {
+            'type': 'python-http',
+            'category': '🌐 ВЕБ-СЕРВИСЫ',
+            'port': 8000,
+            'max_players': 100,
+            'start_command': 'python -m http.server 8000',
+            'description': 'Python HTTP Server'
+        },
+        'flask': {
+            'type': 'flask',
+            'category': '🌐 ВЕБ-СЕРВИСЫ',
+            'port': 5000,
+            'max_players': 100,
+            'start_command': 'python app.py',
+            'description': 'Flask Web Server'
+        },
+        'django': {
+            'type': 'django',
+            'category': '🌐 ВЕБ-СЕРВИСЫ',
+            'port': 8000,
+            'max_players': 100,
+            'start_command': 'python manage.py runserver',
+            'description': 'Django Web Server'
+        },
+
+        # 🗄️ DATABASES
+        'mysql': {
+            'type': 'mysql',
+            'category': '🗄️ БАЗЫ ДАННЫХ',
+            'port': 3306,
+            'max_players': 100,
+            'start_command': 'sudo systemctl start mysql',
+            'description': 'MySQL Database'
+        },
+        'postgresql': {
+            'type': 'postgresql',
+            'category': '🗄️ БАЗЫ ДАННЫХ',
+            'port': 5432,
+            'max_players': 100,
+            'start_command': 'sudo systemctl start postgresql',
+            'description': 'PostgreSQL Database'
+        },
+        'mongodb': {
+            'type': 'mongodb',
+            'category': '🗄️ БАЗЫ ДАННЫХ',
+            'port': 27017,
+            'max_players': 100,
+            'start_command': 'mongod --dbpath /data/db',
+            'description': 'MongoDB Database'
+        },
+        'redis': {
+            'type': 'redis',
+            'category': '🗄️ БАЗЫ ДАННЫХ',
+            'port': 6379,
+            'max_players': 100,
+            'start_command': 'redis-server',
+            'description': 'Redis Cache'
+        },
+        'sqlite': {
+            'type': 'sqlite',
+            'category': '🗄️ БАЗЫ ДАННЫХ',
+            'port': 0,
+            'max_players': 100,
+            'start_command': 'sqlite3',
+            'description': 'SQLite Database'
+        },
+
+        # 🎙️ MEDIA & VOICE
+        'mumble': {
+            'type': 'mumble',
+            'category': '🎙️ МЕДИА И ГОЛОС',
+            'port': 64738,
+            'max_players': 100,
+            'start_command': 'murmurd -fg',
+            'description': 'Mumble Voice Server'
+        },
+        'teamspeak': {
+            'type': 'teamspeak',
+            'category': '🎙️ МЕДИА И ГОЛОС',
+            'port': 9987,
+            'max_players': 100,
+            'start_command': './ts3server_linux_amd64 inifile=ts3server.ini',
+            'description': 'TeamSpeak 3 Server'
+        },
+        'jitsi-meet': {
+            'type': 'jitsi-meet',
+            'category': '🎙️ МЕДИА И ГОЛОС',
+            'port': 8080,
+            'max_players': 100,
+            'start_command': 'docker run -d jitsi/web',
+            'description': 'Jitsi Meet'
+        },
+
+        # 📚 DEVELOPMENT
+        'git-server': {
+            'type': 'git-server',
+            'category': '📚 РАЗРАБОТКА',
+            'port': 9418,
+            'max_players': 100,
+            'start_command': 'git daemon --base-path=/path/to/repos',
+            'description': 'Git Server'
+        },
+        'gitlab': {
+            'type': 'gitlab',
+            'category': '📚 РАЗРАБОТКА',
+            'port': 80,
+            'max_players': 100,
+            'start_command': 'gitlab-ctl start',
+            'description': 'GitLab Server'
+        },
+        'jenkins': {
+            'type': 'jenkins',
+            'category': '📚 РАЗРАБОТКА',
+            'port': 8080,
+            'max_players': 100,
+            'start_command': 'java -jar jenkins.war',
+            'description': 'Jenkins CI/CD'
+        },
+
+        # 🎓 GAME ENGINES / TOOLS
+        'godot-server': {
+            'type': 'godot-server',
+            'category': '🎓 ИГРОВЫЕ ДВИЖКИ',
+            'port': 8000,
+            'max_players': 100,
+            'start_command': 'godot --headless',
+            'description': 'Godot Game Engine'
+        },
+        'unity-server': {
+            'type': 'unity-server',
+            'category': '🎓 ИГРОВЫЕ ДВИЖКИ',
+            'port': 8000,
+            'max_players': 100,
+            'start_command': './UnityServer.x86_64',
+            'description': 'Unity Game Engine'
+        },
+
+        # 📊 OTHER
+        'minecraft-bedrock': {
+            'type': 'minecraft-bedrock',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 19132,
+            'max_players': 20,
+            'start_command': './bedrock_server',
+            'description': 'Minecraft Bedrock Edition'
+        },
+        'minetest': {
+            'type': 'minetest',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 30000,
+            'max_players': 100,
+            'start_command': 'minetestserver --world default',
+            'description': 'Minetest Server'
+        },
+        'zandronum': {
+            'type': 'zandronum',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 10666,
+            'max_players': 32,
+            'start_command': 'zandronum-server -host',
+            'description': 'Zandronum (Doom/Heretic)'
+        },
     }
     
     def __init__(self, config_dir: str = './servers'):
@@ -135,6 +436,7 @@ class ServerManager:
         config = {
             'name': name,
             'type': preset,
+            'category': preset_config.get('category', 'Прочее'),
             'port': preset_config['port'],
             'max_players': preset_config.get('max_players', 20),
             'description': preset_config.get('description', f'{preset} Server'),
@@ -332,7 +634,7 @@ class ServerManager:
             print("│  4️⃣  Показать все серверы                                               │")
             print("│  5️⃣  Показать статус сервера                                            │")
             print("│  6️⃣  Удалить сервер                                                     │")
-            print("│  7️⃣  Показать доступные игры                                            │")
+            print("│  7️⃣  Показать доступные сервисы по категориям                           │")
             print("│  0️⃣  Выход                                                              │")
             print("│                                                                         │")
             print("└─────────────────────────────────────────────────────────────────────────┘")
@@ -352,7 +654,7 @@ class ServerManager:
             elif choice == '6':
                 self.menu_delete_server()
             elif choice == '7':
-                self.show_games_menu()
+                self.show_categories_menu()
             elif choice == '0':
                 print("\n👋 Спасибо за использование Easy Server!\n")
                 sys.exit(0)
@@ -360,24 +662,59 @@ class ServerManager:
                 print("❌ Неверный выбор. Попробуйте снова.")
                 input("Нажмите Enter для продолжения...")
     
-    def show_games_menu(self) -> None:
-        """Показать меню выбора игр"""
-        games = list(self.SERVER_PRESETS.keys())
+    def show_categories_menu(self) -> None:
+        """Показать меню по категориям"""
+        categories = {}
+        for key, preset in self.SERVER_PRESETS.items():
+            cat = preset.get('category', 'Прочее')
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append((key, preset))
         
         while True:
             print("\n" + "="*80)
-            print("🎮 ДОСТУПНЫЕ ИГРЫ".center(80))
+            print("🎮 ДОСТУПНЫЕ СЕРВИСЫ ПО КАТЕГОРИЯМ".center(80))
             print("="*80 + "\n")
             
-            for i, game in enumerate(games, 1):
-                preset = self.SERVER_PRESETS[game]
-                print(f"{i}. 📌 {game.upper()}")
-                print(f"   Описание: {preset['description']}")
-                print(f"   Порт: {preset['port']} | Макс. игроков: {preset['max_players']}\n")
+            sorted_categories = sorted(categories.keys())
+            for i, cat in enumerate(sorted_categories, 1):
+                count = len(categories[cat])
+                print(f"{i}. {cat} ({count} сервисов)")
             
             print("0. ◀️ Назад в главное меню\n")
             
-            choice = input("➤ Выберите игру (0 для выхода): ").strip()
+            choice = input("➤ Выберите категорию: ").strip()
+            
+            if choice == '0':
+                break
+            
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(sorted_categories):
+                    category = sorted_categories[idx]
+                    self.show_games_in_category(category, categories[category])
+                else:
+                    print("❌ Неверный выбор")
+            except ValueError:
+                print("❌ Введите число")
+            
+            input("Нажмите Enter для продолжения...")
+    
+    def show_games_in_category(self, category: str, games: list) -> None:
+        """Показать игры в категории"""
+        while True:
+            print("\n" + "="*80)
+            print(f"{category}".center(80))
+            print("="*80 + "\n")
+            
+            for i, (game_key, preset) in enumerate(games, 1):
+                print(f"{i}. 📌 {game_key.upper()}")
+                print(f"   {preset['description']}")
+                print(f"   Порт: {preset['port']} | Макс: {preset['max_players']}\n")
+            
+            print("0. ◀️ Назад\n")
+            
+            choice = input("➤ Выберите сервис: ").strip()
             
             if choice == '0':
                 break
@@ -385,8 +722,8 @@ class ServerManager:
             try:
                 idx = int(choice) - 1
                 if 0 <= idx < len(games):
-                    game = games[idx]
-                    self.quick_start_server(game)
+                    game_key, _ = games[idx]
+                    self.quick_start_server(game_key)
                 else:
                     print("❌ Неверный выбор")
             except ValueError:
@@ -489,10 +826,11 @@ class ServerManager:
         print("➕ СОЗДАНИЕ НОВОГО СЕРВЕРА".center(80))
         print("="*80 + "\n")
         
-        print("Доступные игры:")
+        print("Доступные игры и сервисы:")
         games = list(self.SERVER_PRESETS.keys())
         for i, game in enumerate(games, 1):
-            print(f"{i}. {game.upper()}")
+            preset = self.SERVER_PRESETS[game]
+            print(f"{i}. {game.upper()} - {preset['description']}")
         
         choice = input("\n➤ Выберите игру (1-{}): ".format(len(games))).strip()
         
