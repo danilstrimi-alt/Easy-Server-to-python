@@ -12,21 +12,21 @@ import threading
 import time
 from pathlib import Path
 from typing import Dict, Optional
-from datetime import datetime
 
+# Проверка зависимостей
 try:
     import psutil
 except ImportError:
     print("⚠️ psutil не установлен. Установите: pip install psutil")
+    input("Нажмите Enter для выхода...")
     sys.exit(1)
 
 
 class ServerManager:
     """Менеджер для управления локальными серверами"""
     
-    # Предустановки для популярных серверов и приложений
     SERVER_PRESETS = {
-        # 🎮 GAME SERVERS
+        # 🎮 ИГРОВЫЕ СЕРВЕРЫ
         'minecraft': {
             'type': 'minecraft',
             'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
@@ -35,12 +35,20 @@ class ServerManager:
             'start_command': 'java -Xmx1024M -Xms1024M -jar server.jar nogui',
             'description': 'Minecraft Java Edition'
         },
+        'minecraft-bedrock': {
+            'type': 'minecraft-bedrock',
+            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
+            'port': 19132,
+            'max_players': 20,
+            'start_command': './bedrock_server',
+            'description': 'Minecraft Bedrock Edition'
+        },
         'csgo': {
             'type': 'csgo',
             'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
             'port': 27015,
             'max_players': 32,
-            'start_command': 'srcds -game csgo -console -usercon +game_type 0 +game_mode 1 +mapgroup mg_allclassic +map de_dust2',
+            'start_command': 'srcds -game csgo -console -usercon +map de_dust2',
             'description': 'Counter-Strike: Global Offensive'
         },
         'cs2': {
@@ -48,7 +56,7 @@ class ServerManager:
             'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
             'port': 27015,
             'max_players': 32,
-            'start_command': 'srcds -game csgo -console +game_type 0 +game_mode 1 +mapgroup mg_allclassic +map de_dust2',
+            'start_command': 'srcds -game csgo -console +map de_dust2',
             'description': 'Counter-Strike 2'
         },
         'scp-sl': {
@@ -59,21 +67,13 @@ class ServerManager:
             'start_command': 'python -m scp_server',
             'description': 'SCP: Secret Laboratory'
         },
-        'gmod': {
-            'type': 'gmod',
+        'rust': {
+            'type': 'rust',
             'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 27015,
-            'max_players': 64,
-            'start_command': 'srcds -game garrysmod',
-            'description': 'Garry\'s Mod'
-        },
-        'tf2': {
-            'type': 'tf2',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 27015,
-            'max_players': 32,
-            'start_command': 'srcds -game tf +maxplayers 32 +map ctf_2fort',
-            'description': 'Team Fortress 2'
+            'port': 28015,
+            'max_players': 500,
+            'start_command': './RustDedicated',
+            'description': 'Rust'
         },
         'valheim': {
             'type': 'valheim',
@@ -83,14 +83,6 @@ class ServerManager:
             'start_command': './valheim_server.x86_64',
             'description': 'Valheim'
         },
-        'rust': {
-            'type': 'rust',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 28015,
-            'max_players': 500,
-            'start_command': './RustDedicated',
-            'description': 'Rust'
-        },
         'ark': {
             'type': 'ark',
             'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
@@ -98,14 +90,6 @@ class ServerManager:
             'max_players': 100,
             'start_command': 'ShooterGameServer TheIsland?listen',
             'description': 'ARK: Survival Evolved'
-        },
-        'terraria': {
-            'type': 'terraria',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 7777,
-            'max_players': 8,
-            'start_command': './TerrariaServer.exe -config /path/to/config.txt',
-            'description': 'Terraria'
         },
         'palworld': {
             'type': 'palworld',
@@ -115,88 +99,8 @@ class ServerManager:
             'start_command': './PalServer.exe',
             'description': 'Palworld'
         },
-        'grounded': {
-            'type': 'grounded',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 27015,
-            'max_players': 4,
-            'start_command': 'grounded_server',
-            'description': 'Grounded'
-        },
-        'conan-exiles': {
-            'type': 'conan-exiles',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 7777,
-            'max_players': 100,
-            'start_command': 'ConanSandboxServer',
-            'description': 'Conan Exiles'
-        },
-        'dayz': {
-            'type': 'dayz',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 2302,
-            'max_players': 60,
-            'start_command': 'DayZServer_x64 -config=serverDZ.cfg',
-            'description': 'DayZ'
-        },
-        'arma3': {
-            'type': 'arma3',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 2302,
-            'max_players': 64,
-            'start_command': './arma3server -config=server.cfg',
-            'description': 'ARMA 3'
-        },
-        'unturned': {
-            'type': 'unturned',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 27015,
-            'max_players': 24,
-            'start_command': './Unturned_Server.x86_64',
-            'description': 'Unturned'
-        },
-        'starbound': {
-            'type': 'starbound',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 21025,
-            'max_players': 8,
-            'start_command': './starbound_server',
-            'description': 'Starbound'
-        },
-        'satisfactory': {
-            'type': 'satisfactory',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 7777,
-            'max_players': 4,
-            'start_command': './FactoryServer.sh',
-            'description': 'Satisfactory'
-        },
-        'space-engineers': {
-            'type': 'space-engineers',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 27016,
-            'max_players': 16,
-            'start_command': 'SpaceEngineersServer.exe',
-            'description': 'Space Engineers'
-        },
-        '7-days-to-die': {
-            'type': '7-days-to-die',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 26900,
-            'max_players': 8,
-            'start_command': './7DaysToDieServer.x86_64',
-            'description': '7 Days to Die'
-        },
-        'project-zomboid': {
-            'type': 'project-zomboid',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 16261,
-            'max_players': 16,
-            'start_command': 'java -jar ProjectZomboid.jar -server',
-            'description': 'Project Zomboid'
-        },
 
-        # 🌐 WEB & SERVICES
+        # 🌐 ВЕБ-СЕРВИСЫ
         'apache': {
             'type': 'apache',
             'category': '🌐 ВЕБ-СЕРВИСЫ',
@@ -229,24 +133,8 @@ class ServerManager:
             'start_command': 'python -m http.server 8000',
             'description': 'Python HTTP Server'
         },
-        'flask': {
-            'type': 'flask',
-            'category': '🌐 ВЕБ-СЕРВИСЫ',
-            'port': 5000,
-            'max_players': 100,
-            'start_command': 'python app.py',
-            'description': 'Flask Web Server'
-        },
-        'django': {
-            'type': 'django',
-            'category': '🌐 ВЕБ-СЕРВИСЫ',
-            'port': 8000,
-            'max_players': 100,
-            'start_command': 'python manage.py runserver',
-            'description': 'Django Web Server'
-        },
 
-        # 🗄️ DATABASES
+        # 🗄️ БАЗЫ ДАННЫХ
         'mysql': {
             'type': 'mysql',
             'category': '🗄️ БАЗЫ ДАННЫХ',
@@ -271,27 +159,11 @@ class ServerManager:
             'start_command': 'mongod --dbpath /data/db',
             'description': 'MongoDB Database'
         },
-        'redis': {
-            'type': 'redis',
-            'category': '🗄️ БАЗЫ ДАННЫХ',
-            'port': 6379,
-            'max_players': 100,
-            'start_command': 'redis-server',
-            'description': 'Redis Cache'
-        },
-        'sqlite': {
-            'type': 'sqlite',
-            'category': '🗄️ БАЗЫ ДАННЫХ',
-            'port': 0,
-            'max_players': 100,
-            'start_command': 'sqlite3',
-            'description': 'SQLite Database'
-        },
 
-        # 🎙️ MEDIA & VOICE
+        # 🎙️ ГОЛОС И МЕДИА
         'mumble': {
             'type': 'mumble',
-            'category': '🎙️ МЕДИА И ГОЛОС',
+            'category': '🎙️ ГОЛОС И МЕДИА',
             'port': 64738,
             'max_players': 100,
             'start_command': 'murmurd -fg',
@@ -299,109 +171,40 @@ class ServerManager:
         },
         'teamspeak': {
             'type': 'teamspeak',
-            'category': '🎙️ МЕДИА И ГОЛОС',
+            'category': '🎙️ ГОЛОС И МЕДИА',
             'port': 9987,
             'max_players': 100,
             'start_command': './ts3server_linux_amd64 inifile=ts3server.ini',
             'description': 'TeamSpeak 3 Server'
         },
-        'jitsi-meet': {
-            'type': 'jitsi-meet',
-            'category': '🎙️ МЕДИА И ГОЛОС',
-            'port': 8080,
-            'max_players': 100,
-            'start_command': 'docker run -d jitsi/web',
-            'description': 'Jitsi Meet'
-        },
-
-        # 📚 DEVELOPMENT
-        'git-server': {
-            'type': 'git-server',
-            'category': '📚 РАЗРАБОТКА',
-            'port': 9418,
-            'max_players': 100,
-            'start_command': 'git daemon --base-path=/path/to/repos',
-            'description': 'Git Server'
-        },
-        'gitlab': {
-            'type': 'gitlab',
-            'category': '📚 РАЗРАБОТКА',
-            'port': 80,
-            'max_players': 100,
-            'start_command': 'gitlab-ctl start',
-            'description': 'GitLab Server'
-        },
-        'jenkins': {
-            'type': 'jenkins',
-            'category': '📚 РАЗРАБОТКА',
-            'port': 8080,
-            'max_players': 100,
-            'start_command': 'java -jar jenkins.war',
-            'description': 'Jenkins CI/CD'
-        },
-
-        # 🎓 GAME ENGINES / TOOLS
-        'godot-server': {
-            'type': 'godot-server',
-            'category': '🎓 ИГРОВЫЕ ДВИЖКИ',
-            'port': 8000,
-            'max_players': 100,
-            'start_command': 'godot --headless',
-            'description': 'Godot Game Engine'
-        },
-        'unity-server': {
-            'type': 'unity-server',
-            'category': '🎓 ИГРОВЫЕ ДВИЖКИ',
-            'port': 8000,
-            'max_players': 100,
-            'start_command': './UnityServer.x86_64',
-            'description': 'Unity Game Engine'
-        },
-
-        # 📊 OTHER
-        'minecraft-bedrock': {
-            'type': 'minecraft-bedrock',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 19132,
-            'max_players': 20,
-            'start_command': './bedrock_server',
-            'description': 'Minecraft Bedrock Edition'
-        },
-        'minetest': {
-            'type': 'minetest',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 30000,
-            'max_players': 100,
-            'start_command': 'minetestserver --world default',
-            'description': 'Minetest Server'
-        },
-        'zandronum': {
-            'type': 'zandronum',
-            'category': '🎮 ИГРОВЫЕ СЕРВЕРЫ',
-            'port': 10666,
-            'max_players': 32,
-            'start_command': 'zandronum-server -host',
-            'description': 'Zandronum (Doom/Heretic)'
-        },
     }
     
     def __init__(self, config_dir: str = './servers'):
-        self.config_dir = Path(config_dir)
-        self.config_dir.mkdir(exist_ok=True)
-        self.servers: Dict[str, Dict] = {}
-        self.processes: Dict[str, subprocess.Popen] = {}
-        self.load_configs()
+        try:
+            self.config_dir = Path(config_dir)
+            self.config_dir.mkdir(exist_ok=True)
+            self.servers: Dict[str, Dict] = {}
+            self.processes: Dict[str, subprocess.Popen] = {}
+            self.load_configs()
+            print("✅ Менеджер инициализирован успешно!")
+        except Exception as e:
+            print(f"❌ Ошибка инициализации: {e}")
+            input("Нажмите Enter для выхода...")
+            sys.exit(1)
     
     def load_configs(self) -> None:
         """Загрузить конфигурации серверов из файлов"""
-        for config_file in self.config_dir.glob('*.json'):
-            try:
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-                    server_name = config.get('name', config_file.stem)
-                    self.servers[server_name] = config
-            except Exception as e:
-                print(f"❌ Ошибка при загрузке {config_file}: {e}")
+        try:
+            for config_file in self.config_dir.glob('*.json'):
+                try:
+                    with open(config_file, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                        server_name = config.get('name', config_file.stem)
+                        self.servers[server_name] = config
+                except Exception as e:
+                    print(f"⚠️ Ошибка загрузки {config_file}: {e}")
+        except Exception as e:
+            print(f"⚠️ Ошибка чтения папки конфигов: {e}")
     
     def save_config(self, server_name: str, config: Dict) -> bool:
         """Сохранить конфигурацию сервера"""
@@ -412,103 +215,97 @@ class ServerManager:
             self.servers[server_name] = config
             return True
         except Exception as e:
-            print(f"❌ Ошибка при сохранении конфигурации: {e}")
+            print(f"❌ Ошибка сохранения: {e}")
             return False
     
     def create_server(self, name: str, preset: str, port: Optional[int] = None, 
                      max_players: Optional[int] = None) -> bool:
-        """Создать новый сервер из предустановки"""
-        if name in self.servers:
-            print(f"⚠️ Сервер '{name}' уже существует")
+        """Создать новый сервер"""
+        try:
+            if name in self.servers:
+                print(f"⚠️ Сервер '{name}' уже существует")
+                return False
+            
+            if preset not in self.SERVER_PRESETS:
+                print(f"❌ Неизвестная предустановка: {preset}")
+                return False
+            
+            preset_config = self.SERVER_PRESETS[preset].copy()
+            
+            if port:
+                preset_config['port'] = port
+            if max_players:
+                preset_config['max_players'] = max_players
+            
+            config = {
+                'name': name,
+                'type': preset,
+                'category': preset_config.get('category', 'Прочее'),
+                'port': preset_config['port'],
+                'max_players': preset_config.get('max_players', 20),
+                'description': preset_config.get('description', f'{preset} Server'),
+                'start_command': preset_config.get('start_command'),
+                'enabled': True
+            }
+            
+            if self.save_config(name, config):
+                print(f"✅ Сервер '{name}' успешно создан")
+                return True
             return False
-        
-        if preset not in self.SERVER_PRESETS:
-            print(f"❌ Неизвестная предустановка: {preset}")
+        except Exception as e:
+            print(f"❌ Ошибка создания сервера: {e}")
             return False
-        
-        preset_config = self.SERVER_PRESETS[preset].copy()
-        
-        if port:
-            preset_config['port'] = port
-        if max_players:
-            preset_config['max_players'] = max_players
-        
-        config = {
-            'name': name,
-            'type': preset,
-            'category': preset_config.get('category', 'Прочее'),
-            'port': preset_config['port'],
-            'max_players': preset_config.get('max_players', 20),
-            'description': preset_config.get('description', f'{preset} Server'),
-            'start_command': preset_config.get('start_command'),
-            'stop_command': preset_config.get('stop_command'),
-            'enabled': True
-        }
-        
-        if self.save_config(name, config):
-            print(f"✅ Сервер '{name}' успешно создан")
-            return True
-        return False
     
     def start_server(self, server_name: str) -> bool:
         """Запустить сервер"""
-        if server_name not in self.servers:
-            print(f"❌ Сервер '{server_name}' не найден")
-            return False
-        
-        if server_name in self.processes and self.processes[server_name].poll() is None:
-            print(f"⚠️ Сервер '{server_name}' уже запущен")
-            return False
-        
-        server_config = self.servers[server_name]
-        start_cmd = server_config.get('start_command')
-        
-        if not start_cmd:
-            print(f"❌ Команда запуска не задана для сервера '{server_name}'")
-            return False
-        
         try:
+            if server_name not in self.servers:
+                print(f"❌ Сервер '{server_name}' не найден")
+                return False
+            
+            if server_name in self.processes and self.processes[server_name].poll() is None:
+                print(f"⚠️ Сервер '{server_name}' уже запущен")
+                return False
+            
+            server_config = self.servers[server_name]
+            start_cmd = server_config.get('start_command')
+            
+            if not start_cmd:
+                print(f"❌ Команда запуска не задана")
+                return False
+            
             def run_server():
                 try:
                     process = subprocess.Popen(
                         start_cmd,
                         shell=True,
                         stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
                         text=True,
                         cwd=self.config_dir
                     )
                     self.processes[server_name] = process
                     print(f"✅ Сервер '{server_name}' запущен (PID: {process.pid})")
-                    
-                    while True:
-                        output = process.stdout.readline()
-                        if not output and process.poll() is not None:
-                            break
-                        if output:
-                            print(f"[{server_name}] {output.rstrip()}")
-                    
                 except Exception as e:
-                    print(f"❌ Ошибка при запуске сервера '{server_name}': {e}")
+                    print(f"❌ Ошибка запуска: {e}")
             
             thread = threading.Thread(target=run_server, daemon=True)
             thread.start()
             time.sleep(0.5)
             return True
-            
         except Exception as e:
-            print(f"❌ Ошибка при запуске сервера: {e}")
+            print(f"❌ Ошибка: {e}")
             return False
     
     def stop_server(self, server_name: str) -> bool:
         """Остановить сервер"""
-        if server_name not in self.processes:
-            print(f"⚠️ Сервер '{server_name}' не запущен")
-            return False
-        
-        process = self.processes[server_name]
-        
         try:
+            if server_name not in self.processes:
+                print(f"⚠️ Сервер не запущен")
+                return False
+            
+            process = self.processes[server_name]
+            
             if process.poll() is None:
                 process.terminate()
                 try:
@@ -516,484 +313,404 @@ class ServerManager:
                 except subprocess.TimeoutExpired:
                     process.kill()
                     process.wait()
-                
-                del self.processes[server_name]
-                print(f"✅ Сервер '{server_name}' остановлен")
-                return True
-            else:
-                del self.processes[server_name]
-                return True
-                
+            
+            del self.processes[server_name]
+            print(f"✅ Сервер '{server_name}' остановлен")
+            return True
         except Exception as e:
-            print(f"❌ Ошибка при остановке сервера: {e}")
+            print(f"❌ Ошибка остановки: {e}")
             return False
     
     def get_server_status(self, server_name: str) -> Dict:
         """Получить статус сервера"""
-        if server_name not in self.servers:
-            return {'status': 'not_found'}
-        
-        server_config = self.servers[server_name]
-        is_running = (server_name in self.processes and 
-                     self.processes[server_name].poll() is None)
-        
-        status = {
-            'name': server_name,
-            'type': server_config.get('type'),
-            'port': server_config.get('port'),
-            'max_players': server_config.get('max_players'),
-            'status': 'running' if is_running else 'stopped',
-            'enabled': server_config.get('enabled', True)
-        }
-        
-        if is_running:
-            try:
-                process = self.processes[server_name]
-                pid = process.pid
-                p = psutil.Process(pid)
-                status['pid'] = pid
-                status['cpu_percent'] = p.cpu_percent(interval=0.1)
-                status['memory_mb'] = p.memory_info().rss / 1024 / 1024
-            except:
-                pass
-        
-        return status
+        try:
+            if server_name not in self.servers:
+                return {'status': 'not_found'}
+            
+            server_config = self.servers[server_name]
+            is_running = (server_name in self.processes and 
+                         self.processes[server_name].poll() is None)
+            
+            status = {
+                'name': server_name,
+                'type': server_config.get('type'),
+                'port': server_config.get('port'),
+                'max_players': server_config.get('max_players'),
+                'status': 'running' if is_running else 'stopped',
+            }
+            
+            if is_running:
+                try:
+                    process = self.processes[server_name]
+                    pid = process.pid
+                    p = psutil.Process(pid)
+                    status['pid'] = pid
+                    status['cpu_percent'] = p.cpu_percent(interval=0.1)
+                    status['memory_mb'] = p.memory_info().rss / 1024 / 1024
+                except:
+                    pass
+            
+            return status
+        except Exception as e:
+            print(f"❌ Ошибка получения статуса: {e}")
+            return {'status': 'error'}
     
     def list_servers(self) -> None:
         """Показать список всех серверов"""
-        print("\n" + "="*80)
-        print("📋 СПИСОК СЕРВЕРОВ".center(80))
-        print("="*80)
-        
-        if not self.servers:
-            print("❌ Нет созданных серверов\n")
-            return
-        
-        for i, server_name in enumerate(self.servers, 1):
-            status = self.get_server_status(server_name)
+        try:
+            print("\n" + "="*80)
+            print("СПИСОК СЕРВЕРОВ".center(80))
+            print("="*80)
             
-            status_emoji = "🟢" if status['status'] == 'running' else "🔴"
+            if not self.servers:
+                print("❌ Нет созданных серверов\n")
+                return
             
-            print(f"\n{i}. {status_emoji} {server_name}")
-            print(f"   Тип: {status['type']}")
-            print(f"   Порт: {status['port']}")
-            print(f"   Статус: {status['status'].upper()}")
-            print(f"   Макс. игроков: {status['max_players']}")
+            for i, server_name in enumerate(self.servers, 1):
+                status = self.get_server_status(server_name)
+                status_emoji = "🟢" if status['status'] == 'running' else "🔴"
+                
+                print(f"\n{i}. {status_emoji} {server_name}")
+                print(f"   Тип: {status['type']}")
+                print(f"   Порт: {status['port']}")
+                print(f"   Статус: {status['status'].upper()}")
+                
+                if 'pid' in status:
+                    print(f"   CPU: {status.get('cpu_percent', 0):.1f}%")
+                    print(f"   RAM: {status.get('memory_mb', 0):.1f}MB")
             
-            if 'pid' in status:
-                print(f"   PID: {status['pid']}")
-                print(f"   CPU: {status['cpu_percent']:.1f}%")
-                print(f"   Память: {status['memory_mb']:.1f} MB")
-        
-        print("\n" + "="*80 + "\n")
+            print("\n" + "="*80)
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
     
     def delete_server(self, server_name: str) -> bool:
         """Удалить сервер"""
-        if server_name not in self.servers:
-            print(f"❌ Сервер '{server_name}' не найден")
-            return False
-        
-        if server_name in self.processes:
-            self.stop_server(server_name)
-        
-        config_path = self.config_dir / f"{server_name}.json"
         try:
+            if server_name not in self.servers:
+                print(f"❌ Сервер не найден")
+                return False
+            
+            if server_name in self.processes:
+                self.stop_server(server_name)
+            
+            config_path = self.config_dir / f"{server_name}.json"
             config_path.unlink()
             del self.servers[server_name]
-            print(f"✅ Сервер '{server_name}' удален")
+            print(f"✅ Сервер удален")
             return True
         except Exception as e:
-            print(f"❌ Ошибка при удалении сервера: {e}")
+            print(f"❌ Ошибка удаления: {e}")
             return False
     
     def show_main_menu(self) -> None:
-        """Показать главное меню"""
+        """Главное меню"""
         while True:
-            print("\n" + "╔" + "═"*78 + "╗")
-            print("║" + "🎮 EASY SERVER - Менеджер локальных серверов 🎮".center(78) + "║")
-            print("╚" + "═"*78 + "╝\n")
-            
-            # Показываем статус активных серверов
-            active_servers = []
-            for name, config in self.servers.items():
-                status = self.get_server_status(name)
-                if status['status'] == 'running':
-                    active_servers.append(f"🟢 {name}")
-            
-            if active_servers:
-                print("📌 АКТИВНЫЕ СЕРВЕРЫ:")
-                for server in active_servers:
-                    print(f"   {server}")
-                print()
-            
-            print("┌─ ВЫБЕРИТЕ ДЕЙСТВИЕ ─────────────────────────────────────────────────────┐")
-            print("│                                                                         │")
-            print("│  1️⃣  Создать новый сервер                                               │")
-            print("│  2️⃣  Запустить существующий сервер                                      │")
-            print("│  3️⃣  Остановить сервер                                                  │")
-            print("│  4️⃣  Показать все серверы                                               │")
-            print("│  5️⃣  Показать статус сервера                                            │")
-            print("│  6️⃣  Удалить сервер                                                     │")
-            print("│  7️⃣  Показать доступные сервисы по категориям                           │")
-            print("│  0️⃣  Выход                                                              │")
-            print("│                                                                         │")
-            print("└─────────────────────────────────────────────────────────────────────────┘")
-            
-            choice = input("\n➤ Выберите опцию (0-7): ").strip()
-            
-            if choice == '1':
-                self.menu_create_server()
-            elif choice == '2':
-                self.menu_start_server()
-            elif choice == '3':
-                self.menu_stop_server()
-            elif choice == '4':
-                self.list_servers()
-            elif choice == '5':
-                self.menu_show_status()
-            elif choice == '6':
-                self.menu_delete_server()
-            elif choice == '7':
-                self.show_categories_menu()
-            elif choice == '0':
-                print("\n👋 Спасибо за использование Easy Server!\n")
-                sys.exit(0)
-            else:
-                print("❌ Неверный выбор. Попробуйте снова.")
-                input("Нажмите Enter для продолжения...")
-    
-    def show_categories_menu(self) -> None:
-        """Показать меню по категориям"""
-        categories = {}
-        for key, preset in self.SERVER_PRESETS.items():
-            cat = preset.get('category', 'Прочее')
-            if cat not in categories:
-                categories[cat] = []
-            categories[cat].append((key, preset))
-        
-        while True:
-            print("\n" + "="*80)
-            print("🎮 ДОСТУПНЫЕ СЕРВИСЫ ПО КАТЕГОРИЯМ".center(80))
-            print("="*80 + "\n")
-            
-            sorted_categories = sorted(categories.keys())
-            for i, cat in enumerate(sorted_categories, 1):
-                count = len(categories[cat])
-                print(f"{i}. {cat} ({count} сервисов)")
-            
-            print("0. ◀️ Назад в главное меню\n")
-            
-            choice = input("➤ Выберите категорию: ").strip()
-            
-            if choice == '0':
-                break
-            
             try:
-                idx = int(choice) - 1
-                if 0 <= idx < len(sorted_categories):
-                    category = sorted_categories[idx]
-                    self.show_games_in_category(category, categories[category])
+                print("\n" + "="*80)
+                print("EASY SERVER - МЕНЕДЖЕР ЛОКАЛЬНЫХ СЕРВЕРОВ".center(80))
+                print("="*80 + "\n")
+                
+                # Активные серверы
+                active = [name for name in self.servers 
+                         if self.get_server_status(name)['status'] == 'running']
+                if active:
+                    print("АКТИВНЫЕ СЕРВЕРЫ:")
+                    for s in active:
+                        print(f"  🟢 {s}")
+                    print()
+                
+                print("1. Создать новый сервер")
+                print("2. Запустить сервер")
+                print("3. Остановить сервер")
+                print("4. Показать все серверы")
+                print("5. Статус сервера")
+                print("6. Удалить сервер")
+                print("7. Доступные игры/сервисы")
+                print("0. Выход")
+                
+                choice = input("\nВыберите опцию (0-7): ").strip()
+                
+                if choice == '1':
+                    self.menu_create_server()
+                elif choice == '2':
+                    self.menu_start_server()
+                elif choice == '3':
+                    self.menu_stop_server()
+                elif choice == '4':
+                    self.list_servers()
+                elif choice == '5':
+                    self.menu_show_status()
+                elif choice == '6':
+                    self.menu_delete_server()
+                elif choice == '7':
+                    self.show_services_menu()
+                elif choice == '0':
+                    print("\nСпасибо за использование!\n")
+                    break
                 else:
                     print("❌ Неверный выбор")
-            except ValueError:
-                print("❌ Введите число")
-            
-            input("Нажмите Enter для продолжения...")
+                
+                input("Нажмите Enter для продолжения...")
+            except Exception as e:
+                print(f"❌ Ошибка в меню: {e}")
+                input("Нажмите Enter для продолжения...")
     
-    def show_games_in_category(self, category: str, games: list) -> None:
-        """Показать игры в категории"""
-        while True:
+    def show_services_menu(self) -> None:
+        """Меню сервисов по категориям"""
+        try:
+            categories = {}
+            for key, preset in self.SERVER_PRESETS.items():
+                cat = preset.get('category', 'Прочее')
+                if cat not in categories:
+                    categories[cat] = []
+                categories[cat].append((key, preset))
+            
+            while True:
+                print("\n" + "="*80)
+                print("ДОСТУПНЫЕ СЕРВИСЫ".center(80))
+                print("="*80 + "\n")
+                
+                sorted_cats = sorted(categories.keys())
+                for i, cat in enumerate(sorted_cats, 1):
+                    count = len(categories[cat])
+                    print(f"{i}. {cat} ({count} сервисов)")
+                
+                print("0. Назад\n")
+                
+                choice = input("Выберите категорию: ").strip()
+                
+                if choice == '0':
+                    break
+                
+                try:
+                    idx = int(choice) - 1
+                    if 0 <= idx < len(sorted_cats):
+                        cat = sorted_cats[idx]
+                        self.show_services_in_category(cat, categories[cat])
+                except:
+                    print("❌ Ошибка выбора")
+                
+                input("Нажмите Enter...")
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
+    
+    def show_services_in_category(self, category: str, services: list) -> None:
+        """Показать сервисы в категории"""
+        try:
+            while True:
+                print("\n" + "="*80)
+                print(category.center(80))
+                print("="*80 + "\n")
+                
+                for i, (key, preset) in enumerate(services, 1):
+                    print(f"{i}. {key.upper()}")
+                    print(f"   {preset['description']}")
+                    print(f"   Порт: {preset['port']}\n")
+                
+                print("0. Назад\n")
+                
+                choice = input("Выберите сервис (или 0 для выхода): ").strip()
+                
+                if choice == '0':
+                    break
+                
+                try:
+                    idx = int(choice) - 1
+                    if 0 <= idx < len(services):
+                        key, _ = services[idx]
+                        self.quick_create_server(key)
+                except:
+                    print("❌ Ошибка выбора")
+                
+                input("Нажмите Enter...")
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
+    
+    def quick_create_server(self, game_type: str) -> None:
+        """Быстрое создание сервера"""
+        try:
+            preset = self.SERVER_PRESETS[game_type]
+            
+            print(f"\nСоздание {game_type.upper()}\n")
+            
+            # Генерируем имя
+            counter = 1
+            name = f"{game_type}_server"
+            while name in self.servers:
+                counter += 1
+                name = f"{game_type}_server_{counter}"
+            
+            name_input = input(f"Имя сервера [{name}]: ").strip() or name
+            
+            if name_input in self.servers:
+                print("❌ Такой сервер уже существует")
+                return
+            
+            port_input = input(f"Порт [{preset['port']}]: ").strip()
+            port = int(port_input) if port_input else None
+            
+            if self.create_server(name_input, game_type, port):
+                launch = input("Запустить сейчас? (да/нет): ").lower()
+                if launch in ['да', 'yes', 'y']:
+                    self.start_server(name_input)
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
+    
+    def menu_create_server(self) -> None:
+        """Меню создания"""
+        try:
             print("\n" + "="*80)
-            print(f"{category}".center(80))
+            print("СОЗДАНИЕ СЕРВЕРА".center(80))
             print("="*80 + "\n")
             
-            for i, (game_key, preset) in enumerate(games, 1):
-                print(f"{i}. 📌 {game_key.upper()}")
-                print(f"   {preset['description']}")
-                print(f"   Порт: {preset['port']} | Макс: {preset['max_players']}\n")
+            games = sorted(self.SERVER_PRESETS.keys())
+            for i, game in enumerate(games, 1):
+                preset = self.SERVER_PRESETS[game]
+                print(f"{i}. {game.upper()} - {preset['description']}")
             
-            print("0. ◀️ Назад\n")
-            
-            choice = input("➤ Выберите сервис: ").strip()
-            
-            if choice == '0':
-                break
+            choice = input(f"\nВыберите (1-{len(games)}): ").strip()
             
             try:
                 idx = int(choice) - 1
                 if 0 <= idx < len(games):
-                    game_key, _ = games[idx]
-                    self.quick_start_server(game_key)
-                else:
-                    print("❌ Неверный выбор")
-            except ValueError:
-                print("❌ Введите число")
-            
-            input("Нажмите Enter для продолжения...")
-    
-    def quick_start_server(self, game_type: str) -> None:
-        """Быстрый запуск сервера выбранной игры"""
-        preset = self.SERVER_PRESETS[game_type]
-        
-        print(f"\n🎮 Быстрый запуск {game_type.upper()}\n")
-        
-        # Проверяем существующие серверы этого типа
-        existing = [name for name, cfg in self.servers.items() if cfg.get('type') == game_type]
-        
-        if existing:
-            print(f"Найдены существующие серверы типа {game_type}:")
-            for i, server in enumerate(existing, 1):
-                status = self.get_server_status(server)
-                state = "🟢 ЗАПУЩЕН" if status['status'] == 'running' else "🔴 ОСТАНОВЛЕН"
-                print(f"{i}. {server} [{state}]")
-            
-            print(f"{len(existing)+1}. Создать новый сервер")
-            print("0. Вернуться назад\n")
-            
-            choice = input("➤ Выберите действие: ").strip()
-            
-            if choice == '0':
-                return
-            elif choice == str(len(existing)+1):
-                self.create_new_quick_server(game_type)
-            else:
-                try:
-                    idx = int(choice) - 1
-                    if 0 <= idx < len(existing):
-                        server = existing[idx]
-                        status = self.get_server_status(server)
-                        if status['status'] == 'running':
-                            print(f"✅ Сервер '{server}' уже запущен!")
-                        else:
-                            confirm = input(f"Запустить сервер '{server}'? (да/нет): ").lower()
-                            if confirm in ['да', 'yes', 'y']:
-                                self.start_server(server)
-                except ValueError:
-                    print("❌ Неверный ввод")
-        else:
-            print(f"Серверов типа {game_type} не найдено\n")
-            confirm = input(f"Создать новый сервер {game_type}? (да/нет): ").lower()
-            if confirm in ['да', 'yes', 'y']:
-                self.create_new_quick_server(game_type)
-    
-    def create_new_quick_server(self, game_type: str) -> None:
-        """Создать новый сервер быстро"""
-        preset = self.SERVER_PRESETS[game_type]
-        
-        print(f"\n📝 Создание сервера {game_type.upper()}\n")
-        
-        # Генерируем имя по умолчанию
-        counter = 1
-        default_name = f"{game_type}_server"
-        while default_name in self.servers:
-            counter += 1
-            default_name = f"{game_type}_server_{counter}"
-        
-        name = input(f"Введите имя сервера [{default_name}]: ").strip() or default_name
-        
-        if name in self.servers:
-            print(f"❌ Сервер с именем '{name}' уже существует")
-            return
-        
-        port = input(f"Введите порт [{preset['port']}]: ").strip()
-        if port:
-            try:
-                port = int(port)
-            except ValueError:
-                print(f"❌ Неверный порт, используется {preset['port']}")
-                port = None
-        else:
-            port = None
-        
-        max_players = input(f"Введите макс. игроков [{preset['max_players']}]: ").strip()
-        if max_players:
-            try:
-                max_players = int(max_players)
-            except ValueError:
-                print(f"❌ Неверное число, используется {preset['max_players']}")
-                max_players = None
-        else:
-            max_players = None
-        
-        if self.create_server(name, game_type, port, max_players):
-            launch = input(f"\n✅ Сервер создан! Запустить его сейчас? (да/нет): ").lower()
-            if launch in ['да', 'yes', 'y']:
-                self.start_server(name)
-    
-    def menu_create_server(self) -> None:
-        """Меню создания сервера"""
-        print("\n" + "="*80)
-        print("➕ СОЗДАНИЕ НОВОГО СЕРВЕРА".center(80))
-        print("="*80 + "\n")
-        
-        print("Доступные игры и сервисы:")
-        games = list(self.SERVER_PRESETS.keys())
-        for i, game in enumerate(games, 1):
-            preset = self.SERVER_PRESETS[game]
-            print(f"{i}. {game.upper()} - {preset['description']}")
-        
-        choice = input("\n➤ Выберите игру (1-{}): ".format(len(games))).strip()
-        
-        try:
-            idx = int(choice) - 1
-            if 0 <= idx < len(games):
-                game = games[idx]
-                self.create_new_quick_server(game)
-            else:
-                print("❌ Неверный выбор")
-        except ValueError:
-            print("❌ Введите число")
-        
-        input("Нажмите Enter для продолжения...")
+                    self.quick_create_server(games[idx])
+            except:
+                print("❌ Ошибка")
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
     
     def menu_start_server(self) -> None:
-        """Меню запуска сервера"""
-        if not self.servers:
-            print("\n❌ Нет созданных серверов\n")
-            input("Нажмите Enter для продолжения...")
-            return
-        
-        print("\n" + "="*80)
-        print("▶️ ЗАПУСК СЕРВЕРА".center(80))
-        print("="*80 + "\n")
-        
-        servers = list(self.servers.keys())
-        for i, server in enumerate(servers, 1):
-            status = self.get_server_status(server)
-            state = "🟢" if status['status'] == 'running' else "🔴"
-            print(f"{i}. {state} {server}")
-        
-        choice = input("\n➤ Выберите сервер (1-{}): ".format(len(servers))).strip()
-        
+        """Меню запуска"""
         try:
-            idx = int(choice) - 1
-            if 0 <= idx < len(servers):
-                server = servers[idx]
-                self.start_server(server)
-            else:
-                print("❌ Неверный выбор")
-        except ValueError:
-            print("❌ Введите число")
-        
-        input("Нажмите Enter для продолжения...")
+            if not self.servers:
+                print("❌ Нет серверов")
+                return
+            
+            print("\n" + "="*80)
+            print("ЗАПУСК СЕРВЕРА".center(80))
+            print("="*80 + "\n")
+            
+            servers = sorted(self.servers.keys())
+            for i, s in enumerate(servers, 1):
+                status = self.get_server_status(s)
+                st = "🟢" if status['status'] == 'running' else "🔴"
+                print(f"{i}. {st} {s}")
+            
+            choice = input(f"\nВыберите (1-{len(servers)}): ").strip()
+            
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(servers):
+                    self.start_server(servers[idx])
+            except:
+                print("❌ Ошибка")
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
     
     def menu_stop_server(self) -> None:
-        """Меню остановки сервера"""
-        running = []
-        for name, config in self.servers.items():
-            status = self.get_server_status(name)
-            if status['status'] == 'running':
-                running.append(name)
-        
-        if not running:
-            print("\n❌ Нет запущенных серверов\n")
-            input("Нажмите Enter для продолжения...")
-            return
-        
-        print("\n" + "="*80)
-        print("⏹️ ОСТАНОВКА СЕРВЕРА".center(80))
-        print("="*80 + "\n")
-        
-        for i, server in enumerate(running, 1):
-            print(f"{i}. 🟢 {server}")
-        
-        choice = input("\n➤ Выберите сервер (1-{}): ".format(len(running))).strip()
-        
+        """Меню остановки"""
         try:
-            idx = int(choice) - 1
-            if 0 <= idx < len(running):
-                server = running[idx]
-                self.stop_server(server)
-            else:
-                print("❌ Неверный выбор")
-        except ValueError:
-            print("❌ Введите число")
-        
-        input("Нажмите Enter для продолжения...")
+            running = [s for s in self.servers 
+                      if self.get_server_status(s)['status'] == 'running']
+            
+            if not running:
+                print("❌ Нет запущенных серверов")
+                return
+            
+            print("\n" + "="*80)
+            print("ОСТАНОВКА СЕРВЕРА".center(80))
+            print("="*80 + "\n")
+            
+            for i, s in enumerate(running, 1):
+                print(f"{i}. 🟢 {s}")
+            
+            choice = input(f"\nВыберите (1-{len(running)}): ").strip()
+            
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(running):
+                    self.stop_server(running[idx])
+            except:
+                print("❌ Ошибка")
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
     
     def menu_show_status(self) -> None:
-        """Меню показа статуса"""
-        if not self.servers:
-            print("\n❌ Нет созданных серверов\n")
-            input("Нажмите Enter для продолжения...")
-            return
-        
-        print("\n" + "="*80)
-        print("📊 СТАТУС СЕРВЕРА".center(80))
-        print("="*80 + "\n")
-        
-        servers = list(self.servers.keys())
-        for i, server in enumerate(servers, 1):
-            status = self.get_server_status(server)
-            state = "🟢" if status['status'] == 'running' else "🔴"
-            print(f"{i}. {state} {server}")
-        
-        choice = input("\n➤ Выберите сервер (1-{}): ".format(len(servers))).strip()
-        
+        """Статус сервера"""
         try:
-            idx = int(choice) - 1
-            if 0 <= idx < len(servers):
-                server = servers[idx]
-                status = self.get_server_status(server)
-                
-                print("\n" + "-"*80)
-                print(f"Сервер: {status['name']}")
-                print(f"Тип: {status['type']}")
-                print(f"Порт: {status['port']}")
-                print(f"Статус: {status['status'].upper()}")
-                print(f"Макс. игроков: {status['max_players']}")
-                
-                if 'pid' in status:
-                    print(f"PID: {status['pid']}")
-                    print(f"CPU: {status['cpu_percent']:.1f}%")
-                    print(f"Память: {status['memory_mb']:.1f} MB")
-                
-                print("-"*80)
-            else:
-                print("❌ Неверный выбор")
-        except ValueError:
-            print("❌ Введите число")
-        
-        input("Нажмите Enter для продолжения...")
+            if not self.servers:
+                print("❌ Нет серверов")
+                return
+            
+            print("\n" + "="*80)
+            print("СТАТУС СЕРВЕРА".center(80))
+            print("="*80 + "\n")
+            
+            servers = sorted(self.servers.keys())
+            for i, s in enumerate(servers, 1):
+                status = self.get_server_status(s)
+                st = "🟢" if status['status'] == 'running' else "🔴"
+                print(f"{i}. {st} {s}")
+            
+            choice = input(f"\nВыберите (1-{len(servers)}): ").strip()
+            
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(servers):
+                    status = self.get_server_status(servers[idx])
+                    print("\n" + "-"*80)
+                    for k, v in status.items():
+                        if isinstance(v, float):
+                            print(f"{k}: {v:.1f}")
+                        else:
+                            print(f"{k}: {v}")
+                    print("-"*80)
+            except:
+                print("❌ Ошибка")
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
     
     def menu_delete_server(self) -> None:
-        """Меню удаления сервера"""
-        if not self.servers:
-            print("\n❌ Нет созданных серверов\n")
-            input("Нажмите Enter для продолжения...")
-            return
-        
-        print("\n" + "="*80)
-        print("🗑️ УДАЛЕНИЕ СЕРВЕРА".center(80))
-        print("="*80 + "\n")
-        
-        servers = list(self.servers.keys())
-        for i, server in enumerate(servers, 1):
-            print(f"{i}. {server}")
-        
-        choice = input("\n➤ Выберите сервер (1-{}): ".format(len(servers))).strip()
-        
+        """Удаление сервера"""
         try:
-            idx = int(choice) - 1
-            if 0 <= idx < len(servers):
-                server = servers[idx]
-                confirm = input(f"\n⚠️ Вы уверены? Это действие необратимо (да/нет): ").lower()
-                if confirm in ['да', 'yes', 'y']:
-                    self.delete_server(server)
-                else:
-                    print("❌ Отменено")
-            else:
-                print("❌ Неверный выбор")
-        except ValueError:
-            print("❌ Введите число")
-        
-        input("Нажмите Enter для продолжения...")
+            if not self.servers:
+                print("❌ Нет серверов")
+                return
+            
+            print("\n" + "="*80)
+            print("УДАЛЕНИЕ СЕРВЕРА".center(80))
+            print("="*80 + "\n")
+            
+            servers = sorted(self.servers.keys())
+            for i, s in enumerate(servers, 1):
+                print(f"{i}. {s}")
+            
+            choice = input(f"\nВыберите (1-{len(servers)}): ").strip()
+            
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(servers):
+                    confirm = input("Вы уверены? (да/нет): ").lower()
+                    if confirm in ['да', 'yes', 'y']:
+                        self.delete_server(servers[idx])
+                    else:
+                        print("Отменено")
+            except:
+                print("❌ Ошибка")
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
 
 
 def main():
     """Главная функция"""
-    manager = ServerManager()
-    manager.show_main_menu()
+    try:
+        manager = ServerManager()
+        manager.show_main_menu()
+    except KeyboardInterrupt:
+        print("\n\nПрограмма завершена пользователем")
+    except Exception as e:
+        print(f"\n❌ Критическая ошибка: {e}")
+        input("Нажмите Enter для выхода...")
 
 
 if __name__ == '__main__':
